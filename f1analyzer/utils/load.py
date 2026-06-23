@@ -1,11 +1,20 @@
+from datetime import datetime
 from pathlib import Path
 
-import fastf1 as ff1
+from fastf1 import Cache
+from fastf1 import get_session
 from fastf1.core import Session
+from fastf1.logger import get_logger
+
+_logger = get_logger(__name__)
+
+START_YEAR: int = 2018
+YEAR_RND_MAP: dict[int, int] = {2018: 21, 2019: 21, 2020: 17, 2021: 22, 2022: 22,
+                                2023: 22, 2024: 24, 2025: 24, 2026: 22}
 
 def load_session(year: int, gp: int | str, session: int | str,
                  load_laps: bool = True, load_telemetry: bool = True,
-                 load_weather: bool = False, load_messages: bool = False) -> Session | ValueError:
+                 load_weather: bool = False, load_messages: bool = False) -> Session:
 
     """
     Used to load data from the specified session. You can demand to only load laps, telemetry, weather or messages.
@@ -25,13 +34,34 @@ def load_session(year: int, gp: int | str, session: int | str,
         raise ValueError("The year, grand prix and session must be provided.")
 
     cache_dir: str = str( Path(__file__).resolve().parents[2] / "cache" )
-    ff1.Cache.enable_cache(cache_dir) #TODO: make a clean path for cache (especially update it in a config file)
+    Cache.enable_cache(cache_dir) #TODO: make a clean path for cache (especially update it in a config file)
 
-    session: Session = ff1.get_session(year, gp, session)
+    session: Session = get_session(year, gp, session)
     session.load(laps=load_laps, telemetry=load_telemetry,
                  weather=load_weather, messages=load_messages)
 
     return session
+
+def get_all_sessions() -> list[Session]:
+    all_sessions: list[Session] | None = loop_all_sessions(datetime.today())
+    assert all_sessions is not None, "No sessions found."
+
+    return all_sessions
+
+def loop_all_sessions(date: datetime) -> list[Session] | None:
+    all_sessions: list[Session] = []
+    for year in range(START_YEAR, date.year + 1):
+        for rnd in range(1, YEAR_RND_MAP[year] + 1):
+            for s_num in range(1, 6):
+                try:
+                    s = get_session(year, rnd, s_num)
+                    if s.date > date:
+                        return all_sessions
+                    all_sessions.append(s)
+                except ValueError:  
+                    _logger.warning(f"Session {s_num} for round {rnd} of year {year} was not found.")
+
+    return None
 
 def get_session_type_identifier(session: Session) -> str:
     if session is None:
