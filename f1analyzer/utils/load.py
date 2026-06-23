@@ -11,6 +11,11 @@ _logger = get_logger(__name__)
 START_YEAR: int = 2018
 YEAR_RND_MAP: dict[int, int] = {2018: 21, 2019: 21, 2020: 17, 2021: 22, 2022: 22,
                                 2023: 22, 2024: 24, 2025: 24, 2026: 22}
+SESSION_TYPE_MAP = {
+    "P": ["Practice 1", "Practice 2", "Practice 3"],
+    "Q": ["Qualifying", "Sprint Qualifying", "Sprint Shootout"],
+    "R": ["Sprint", "Race"],
+}
 
 def load_session(year: int, gp: int | str, session: int | str,
                  load_laps: bool = True, load_telemetry: bool = True,
@@ -70,9 +75,9 @@ def get_session_type_identifier(session: Session) -> str:
     if not isinstance(session, Session):
         raise ValueError("The session must be a FastF1 Session.")
 
-    if session.name == "Sprint" or session.name[0] == "R":
-        return "R"
-    elif "Practice" in session.name:
-        return "P"
-    else:
-        return "Q"
+    for item in SESSION_TYPE_MAP.items():
+        _id, names = item[0], item[1]
+        if session.name in names:
+            return _id
+
+    raise ValueError(f"The session type {session.name} was not found.")
