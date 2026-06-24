@@ -1,16 +1,14 @@
 from datetime import datetime
 from pathlib import Path
 
-from fastf1 import Cache
+from fastf1 import Cache, get_event_schedule
 from fastf1 import get_session
-from fastf1.core import Session
+from fastf1.core import Session, Event
 from fastf1.logger import get_logger
 
 _logger = get_logger(__name__)
 
 START_YEAR: int = 2018
-YEAR_RND_MAP: dict[int, int] = {2018: 21, 2019: 21, 2020: 17, 2021: 22, 2022: 22,
-                                2023: 22, 2024: 24, 2025: 24, 2026: 22}
 SESSION_TYPE_MAP = {
     "P": ["Practice 1", "Practice 2", "Practice 3"],
     "Q": ["Qualifying", "Sprint Qualifying", "Sprint Shootout"],
@@ -47,28 +45,42 @@ def load_session(year: int, gp: int | str, session: int | str,
 
     return session
 
-def get_all_sessions() -> list[Session]:
-    all_sessions: list[Session] | None = loop_all_sessions(datetime.today())
-    assert all_sessions is not None, "No sessions found."
+def get_all_years() -> list[int]:
+    """
+    :return: The list of years available.
+    """
+    return [i for i in range(START_YEAR, datetime.today().year + 1)]
+
+def get_all_year_rounds(year: int):
+    """
+    :param year:
+    :return: The list of rounds available for a given year.
+    """
+    return get_event_schedule(year)[["RoundNumber"]]
+
+def get_all_round_sessions(event: Event) -> list[Session]:
+    """
+    :param event:
+    :return: The list of sessions available for a given event.
+    """
+    session_names = [
+        event[f'Session{i}']
+        for i in range(1, 6)
+        if event[f'Session{i}']
+    ]
+
+    all_sessions: list[Session] = []
+    for name in session_names:
+        session = event.get_session(name)
+        all_sessions.append(session)
 
     return all_sessions
 
-def loop_all_sessions(date: datetime) -> list[Session] | None:
-    all_sessions: list[Session] = []
-    for year in range(START_YEAR, date.year + 1):
-        for rnd in range(1, YEAR_RND_MAP[year] + 1):
-            for s_num in range(1, 6):
-                try:
-                    s = get_session(year, rnd, s_num)
-                    if s.date > date:
-                        return all_sessions
-                    all_sessions.append(s)
-                except ValueError:  
-                    _logger.warning(f"Session {s_num} for round {rnd} of year {year} was not found.")
-
-    return None
-
 def get_session_type_identifier(session: Session) -> str:
+    """
+    :param session:
+    :return: The ID (P, Q, R) for a given session.
+    """
     if session is None:
         raise ValueError("The session must be provided.")
 
