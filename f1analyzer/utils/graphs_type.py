@@ -11,16 +11,13 @@ ALL_GRAPHS: dict[str, list[str]] = {"PQ": ["axV", "ayV", "gg", "aeroSummary", "g
 
                                     "PR": ["tyreDegNoFuelCorr", "tyreWear"]}
 
-# ID format XYY (X corresponds to PQ=1, R=2 or PR=3 and Y corresponds to the graph's number)
-def get_id_graph_map() -> dict[int, str]:
-    id_graph_map: dict[int, str] = {}
-    for i, key in enumerate(ALL_GRAPHS):
-        graphs: list[str] = ALL_GRAPHS[key]
-        for j, graph in enumerate(graphs):
-            id_graph_map[(i+1)*100 + (j+1)] = graph
-    return id_graph_map
-
 def get_available_graphs(session: Session) -> list[str]:
+    """
+    Get the graphs that can be plotted for a given session type.
+
+    :param session:
+    :return: A list of the available graphs names.
+    """
     session_identifier: str = get_session_type_identifier(session)
 
     if session_identifier == "P":
