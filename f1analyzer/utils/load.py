@@ -16,12 +16,11 @@ SESSION_TYPE_MAP = {
 }
 
 def load_session(year: int, gp: int | str, session: int | str,
-                 load_laps: bool = True, load_telemetry: bool = True,
+                 load_laps: bool = False, load_telemetry: bool = False,
                  load_weather: bool = False, load_messages: bool = False) -> Session:
-
     """
     Used to load data from the specified session. You can demand to only load laps, telemetry, weather or messages.
-    By default, it loads only laps and telemetry.
+    By default, it loads nothing to avoid loading data that is not needed. Warns if every boolean flag is false.
 
     :param year:
     :param gp:
@@ -35,6 +34,9 @@ def load_session(year: int, gp: int | str, session: int | str,
 
     if None in (year, gp, session):
         raise ValueError("The year, grand prix and session must be provided.")
+
+    if not (load_laps and load_telemetry and load_weather and load_messages):
+        _logger.warning("No option were asked to be loaded.")
 
     cache_dir: str = str( Path(__file__).resolve().parents[2] / "cache" )
     Cache.enable_cache(cache_dir) #TODO: make a clean path for cache (especially update it in a config file)
