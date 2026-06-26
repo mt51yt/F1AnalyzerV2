@@ -1,6 +1,10 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtWidgets import QApplication, QMainWindow, QToolBar, QWidget, QVBoxLayout, QMenuBar, QMenu
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QIcon
+from PySide6.QtWidgets import QApplication, QMainWindow, QToolBar, QWidget, QVBoxLayout, QMenuBar, QMenu, QDockWidget, QMessageBox
+
+from fastf1.core import Session
+
+from f1analyzer.ui.widgets.session_explorer import SessionExplorer
 
 
 class Home(QMainWindow):
@@ -37,10 +41,11 @@ class Home(QMainWindow):
         #TODO: update menubar when new ideas and functionalities come up
 
     def _build_explorer(self):
-        explorer: QToolBar = QToolBar("Session Explorer")
-        explorer.setMovable(False)
-
-        self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, explorer)
+        self.explorer: QDockWidget = SessionExplorer(self)
+        self.addDockWidget(
+            Qt.DockWidgetArea.LeftDockWidgetArea,
+            self.explorer
+        )
 
         #TODO: add a qtree (and QTreeWidgetItems) to see all the sessions available with FastF1 API (all checkable)
 
@@ -70,6 +75,23 @@ class Home(QMainWindow):
         _ = QVBoxLayout(graph_viz)
 
         self.setCentralWidget(graph_viz)
+
+    def _on_session_loaded(self, session: Session):
+        self._set_loading_state(False)
+        self._current_session = session
+        #self._refresh_graph_panel()
+
+    def _on_load_error(self, message: str):
+        self._set_loading_state(False)
+        # Show an error dialog or status bar message
+        QMessageBox.critical(self, "Load Error", message)
+
+    def _on_progress(self, message: str):
+        self.statusBar().showMessage(message)
+
+    def _set_loading_state(self, loading: bool):
+        # Disable the session explorer while loading to prevent re-entrant calls
+        self.explorer.setEnabled(not loading)
 
 if __name__ == '__main__':
     app: QApplication = QApplication([])
