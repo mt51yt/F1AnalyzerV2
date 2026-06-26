@@ -152,20 +152,21 @@ class SessionTreeModel(QAbstractItemModel):
         return True
 
     def _set_children_check_state(self, node: SessionTreeNode, checked: bool) -> None:
-        for child in node.children:
+        for i, child in enumerate(node.children):
             child.checked = checked
-            self._set_children_check_state(child, checked)  # recurse
+            child_index = self.createIndex(i, 0, child)
+            self.dataChanged.emit(child_index, child_index, [Qt.ItemDataRole.CheckStateRole])
+            self._set_children_check_state(child, checked)
 
     def _update_parent_check_state(self, node: SessionTreeNode) -> None:
+        child_states = [c.checked for c in node.children]
 
-        child_states = [c.check_state for c in node.children]
-
-        if all(s == Qt.CheckState.Checked for s in child_states):
-            node.check_state = Qt.CheckState.Checked
-        elif all(s == Qt.CheckState.Unchecked for s in child_states):
-            node.check_state = Qt.CheckState.Unchecked
+        if all(child_states):
+            node.checked = True
+        elif not any(child_states):
+            node.checked = False
         else:
-            node.check_state = Qt.CheckState.PartiallyChecked
+            node.checked = False
 
         parent_index = self.createIndex(node.row(), 0, node)
         self.dataChanged.emit(parent_index, parent_index, [Qt.ItemDataRole.CheckStateRole])
