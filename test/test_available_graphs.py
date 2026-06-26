@@ -1,8 +1,11 @@
 import pytest
 from fastf1 import get_session
+from datetime import datetime
 
 from f1analyzer.utils.load import get_session_type_identifier
 from f1analyzer.utils.graphs_type import get_available_graphs
+
+from f1analyzer.utils.load import get_all_year_rounds
 
 PRACTICE_GRAPHS: list[str] = ["axV", "ayV", "gg", "aeroSummary", "gapMap", "gapToFastest", "idealLap", "inputs",
                               "miniSectorsMap", "predictedRacePace", "speedAcc", "speedDelta", "speedDeltaBattle",
@@ -16,17 +19,16 @@ RACE_GRAPHS: list[str] = ["dragReduction", "gapToWinner", "positionPerLap", "rac
                           "raceStrategy", "minSpeedHeatMap", "maxSpeedHeatMap", "tyreDegFuelCorr", "tyreDegNoFuelCorr",
                           "tyreWear"]
 
-# Define the seasons and number of rounds we want to test
-SEASONS = [2018, 2019, 2021, 2022, 2023, 2024, 2025, 2026]
-SEASONS_ROUNDS = [21, 21, 22, 22, 22, 24, 24, 7]
+def _build_test_cases():
+    cases = []
+    for year in range(2018, datetime.today().year + 1):
+        rounds = get_all_year_rounds(int(year))
+        for rnd in rounds["RoundNumber"]:
+            for session_num in range(1, 6):
+                cases.append((int(year), int(rnd), session_num))
+    return cases
 
-# Define all the test cases
-TEST_CASES = [
-    (season, rnd, session)
-    for season, nb_rounds in zip(SEASONS, SEASONS_ROUNDS)
-    for rnd in range(1, nb_rounds + 1)
-    for session in range(1, 6)
-]
+TEST_CASES = _build_test_cases()
 
 # Test
 @pytest.mark.parametrize("season,rnd,session",

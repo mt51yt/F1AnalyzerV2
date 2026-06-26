@@ -2,7 +2,7 @@ from PySide6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from PySide6.QtWidgets import QTreeView, QDockWidget
 from enum import Enum, auto
 
-from f1analyzer.utils.load import get_all_year_rounds, get_all_round_sessions, get_all_years
+from f1analyzer.utils.load import get_all_year_rounds, get_all_round_sessions_names, get_all_years
 
 
 class NodeType(Enum):
@@ -171,11 +171,11 @@ class SessionTreeModel(QAbstractItemModel):
         ]
 
     def _fetch_sessions(self, year: int, rnd: int) -> list[SessionTreeNode]:
-        raw = get_all_round_sessions(int(year), rnd)
+        raw = get_all_round_sessions_names(int(year), rnd)
         parent_node = self._find_round_node(year, rnd)
         return [
             SessionTreeNode(
-                data={"year": year, "round": rnd, "session": s.name},
+                data={"year": year, "round": rnd, "session": s},
                 node_type=NodeType.SESSION,
                 parent=parent_node
             )

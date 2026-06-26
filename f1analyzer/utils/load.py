@@ -4,15 +4,18 @@ from pathlib import Path
 from fastf1 import Cache, get_event_schedule, get_event
 from fastf1 import get_session
 from fastf1.core import Session
+from fastf1.events import EventSchedule
 from fastf1.logger import get_logger
 
 _logger = get_logger(__name__)
 
 START_YEAR: int = 2018
+TESTING_EVENT_NAMES = {"Pre-Season Test", "Pre-Season Testing"}
 SESSION_TYPE_MAP = {
     "P": ["Practice 1", "Practice 2", "Practice 3"],
     "Q": ["Qualifying", "Sprint Qualifying", "Sprint Shootout"],
     "R": ["Sprint", "Race"],
+    "T": ["Practice 1", "Practice 2", "Practice 3"]
 }
 
 def load_session(year: int, gp: int | str, session: int | str,
@@ -53,16 +56,16 @@ def get_all_years() -> list[str]:
     """
     return [str(i) for i in range(START_YEAR, datetime.today().year + 1)]
 
-def get_all_year_rounds(year: int):
+def get_all_year_rounds(year: int) -> EventSchedule:
     """
     :param year:
     :return: The list of rounds available for a given year.
     """
-    event_schedule = get_event_schedule(year)
+    event_schedule = get_event_schedule(year, include_testing=False)
     names = event_schedule[["EventName"]]
     return names
 
-def get_all_round_sessions(year: int, rnd: int) -> list[Session]:
+def get_all_round_sessions_names(year: int, rnd: int) -> list[str]:
     """
     :param year:
     :param rnd:
@@ -75,12 +78,7 @@ def get_all_round_sessions(year: int, rnd: int) -> list[Session]:
         if event[f'Session{i}']
     ]
 
-    all_sessions: list[Session] = []
-    for name in session_names:
-        session = event.get_session(name)
-        all_sessions.append(session)
-
-    return all_sessions
+    return [name for name in session_names]
 
 def get_session_type_identifier(session: Session) -> str:
     """
@@ -92,6 +90,9 @@ def get_session_type_identifier(session: Session) -> str:
 
     if not isinstance(session, Session):
         raise ValueError("The session must be a FastF1 Session.")
+
+    if session.event["EventName"] in TESTING_EVENT_NAMES:
+        return "T"
 
     for item in SESSION_TYPE_MAP.items():
         _id, names = item[0], item[1]
