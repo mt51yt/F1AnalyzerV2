@@ -13,7 +13,7 @@ class Home(QMainWindow):
         super().__init__()
         self.setWindowTitle("F1 Analyzer V2 - Home")
 
-        ico: QIcon = QIcon("../../img/ico.png")
+        ico: QIcon = QIcon("img/ico.png")
         self.setWindowIcon(ico)
 
         self._build_menubar()
@@ -90,10 +90,3 @@ class Home(QMainWindow):
     def _set_loading_state(self, loading: bool):
         # Disable the session explorer while loading to prevent re-entrant calls
         self.explorer.setEnabled(not loading)
-
-if __name__ == '__main__':
-    app: QApplication = QApplication([])
-    window: Home = Home()
-    window.showMaximized()
-
-    app.exec()

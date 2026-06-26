@@ -1,7 +1,5 @@
 from fastf1.core import Session, get_session
 from fastf1.logger import get_logger
-from fastf1 import Cache
-from pathlib import Path
 
 _logger = get_logger(__name__)
 
@@ -35,9 +33,6 @@ def load_session(year: int, gp: int | str, session: int | str,
 
     if not (load_laps and load_telemetry and load_weather and load_messages):
         _logger.warning("No option were asked to be loaded.")
-
-    cache_dir: str = str( Path(__file__).resolve().parents[2] / "cache" )
-    Cache.enable_cache(cache_dir) #TODO: make a clean path for cache (especially update it in a config file)
 
     _session: Session = get_session(year, gp, session)
     _session.load(laps=load_laps, telemetry=load_telemetry,

@@ -1,15 +1,12 @@
 from datetime import datetime
-from pathlib import Path
 
-from fastf1 import Cache, get_event_schedule, get_event
-from fastf1 import get_session
-from fastf1.core import Session
+from fastf1 import get_event_schedule, get_event
 from fastf1.events import EventSchedule
 from fastf1.logger import get_logger
 
-_logger = get_logger(__name__)
+from f1analyzer.config import START_YEAR
 
-START_YEAR: int = 2018
+_logger = get_logger(__name__)
 
 def get_all_years() -> list[str]:
     """
