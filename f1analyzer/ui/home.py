@@ -47,8 +47,6 @@ class Home(QMainWindow):
             self.explorer
         )
 
-        #TODO: add a QTree (and QTreeWidgetItems) to see all the sessions available with FastF1 API (all checkable)
-
     def _build_available_graphs(self):
         available_graphs: QToolBar = QToolBar("Available Graphs")
         available_graphs.setMovable(False)
