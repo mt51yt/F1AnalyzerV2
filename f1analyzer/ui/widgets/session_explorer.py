@@ -1,3 +1,5 @@
+from typing import Literal
+
 from PySide6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from PySide6.QtWidgets import QTreeView, QDockWidget
 from enum import Enum, auto
@@ -20,6 +22,8 @@ class SessionTreeNode:
         self.parent_node = parent
         self.children: list[SessionTreeNode] = []
         self.children_loaded: bool = False
+        self.check_state: Qt.CheckState = Qt.CheckState.Unchecked
+        self.checked: bool = False
 
     def child(self, row: int) -> "SessionTreeNode":
         return self.children[row]
@@ -55,6 +59,34 @@ class SessionTreeModel(QAbstractItemModel):
             )
             self._root.children.append(node)
 
+    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
+        if not index.isValid():
+            return Qt.ItemFlag.NoItemFlags
+
+        # noinspection PyTypeChecker
+        return (
+            Qt.ItemFlag.ItemIsEnabled |
+            Qt.ItemFlag.ItemIsSelectable |
+            Qt.ItemFlag.ItemIsUserCheckable
+        )
+
+    def setData(self, index: QModelIndex, value, role: int = Qt.ItemDataRole.EditRole) -> bool:
+        if not index.isValid() or role != Qt.ItemDataRole.CheckStateRole:
+            return False
+
+        node = self._node_from_index(index)
+        assert node is not None
+
+        node.checked = (value == Qt.CheckState.Checked.value)  # .value gives the int (2)
+
+        self._set_children_check_state(node, node.checked)
+
+        if node.parent_node and node.parent_node is not self._root:
+            self._update_parent_check_state(node.parent_node)
+
+        self.dataChanged.emit(index, index, [Qt.ItemDataRole.CheckStateRole])
+        return True
+
     def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
@@ -89,14 +121,22 @@ class SessionTreeModel(QAbstractItemModel):
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
         return 1
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> str | None:
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> (
+            Literal[Qt.CheckState.Checked, Qt.CheckState.Unchecked] | None | str
+    ):
         if not index.isValid():
             return None
-        if role == Qt.ItemDataRole.DisplayRole:
-            node = self._node_from_index(index)
-            assert node is not None
-            return node.display_text()
-        return None
+
+        node = self._node_from_index(index)
+        assert node is not None
+
+        match role:
+            case Qt.ItemDataRole.DisplayRole:
+                return node.display_text()
+            case Qt.ItemDataRole.CheckStateRole:
+                return Qt.CheckState.Checked if node.checked else Qt.CheckState.Unchecked
+            case _:
+                return None
 
     def hasChildren(self, parent: QModelIndex = QModelIndex()) -> bool:
         node = self._node_from_index(parent)
@@ -110,6 +150,28 @@ class SessionTreeModel(QAbstractItemModel):
             return node.child_count() > 0
 
         return True
+
+    def _set_children_check_state(self, node: SessionTreeNode, checked: bool) -> None:
+        for child in node.children:
+            child.checked = checked
+            self._set_children_check_state(child, checked)  # recurse
+
+    def _update_parent_check_state(self, node: SessionTreeNode) -> None:
+
+        child_states = [c.check_state for c in node.children]
+
+        if all(s == Qt.CheckState.Checked for s in child_states):
+            node.check_state = Qt.CheckState.Checked
+        elif all(s == Qt.CheckState.Unchecked for s in child_states):
+            node.check_state = Qt.CheckState.Unchecked
+        else:
+            node.check_state = Qt.CheckState.PartiallyChecked
+
+        parent_index = self.createIndex(node.row(), 0, node)
+        self.dataChanged.emit(parent_index, parent_index, [Qt.ItemDataRole.CheckStateRole])
+
+        if node.parent_node and node.parent_node is not self._root:
+            self._update_parent_check_state(node.parent_node)
 
     def _node_from_index(self, index: QModelIndex) -> SessionTreeNode | None:
         if index.isValid():
@@ -144,7 +206,6 @@ class SessionTreeModel(QAbstractItemModel):
         node = self._node_from_index(parent)
         assert node is not None
 
-        # Fetch the right level of data depending on node type
         if node.node_type == NodeType.YEAR:
             children = self._fetch_rounds(node.data["year"])
         elif node.node_type == NodeType.ROUND:
@@ -155,6 +216,12 @@ class SessionTreeModel(QAbstractItemModel):
         self.beginInsertRows(parent, 0, len(children) - 1)
         node.children = children
         node.children_loaded = True
+
+        # Inherit parent check state for newly loaded children
+        if node.checked:
+            for child in node.children:
+                child.checked = True
+
         self.endInsertRows()
 
     def _fetch_rounds(self, year: int) -> list[SessionTreeNode]:
