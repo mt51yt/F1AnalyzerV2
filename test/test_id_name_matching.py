@@ -1,6 +1,7 @@
 import pytest
 from fastf1 import get_session
-from f1analyzer.utils.load import get_session_type_identifier
+from f1analyzer.core.session import get_session_type_identifier
+from test.build_test_cases import _build_test_cases
 
 # Define the seasons and number of rounds we want to test
 SEASONS = [2018, 2019, 2021, 2022, 2023, 2024, 2025, 2026]
@@ -11,13 +12,7 @@ ID_NAME_MATCHING: dict[str, str | list[str]] = {"P": ["Practice 1", "Practice 2"
                                                 "Q": ["Qualifying", "Sprint Qualifying", "Sprint Shootout"],
                                                 "R": ["Sprint", "Race"]}
 
-# Define all the test cases
-TEST_CASES = [
-    (season, rnd, session)
-    for season, nb_rounds in zip(SEASONS, SEASONS_ROUNDS)
-    for rnd in range(1, nb_rounds + 1)
-    for session in range(1, 6)
-]
+TEST_CASES = _build_test_cases()
 
 # Get the corresponding session with its id
 def get_session_and_id(season, rnd, session):

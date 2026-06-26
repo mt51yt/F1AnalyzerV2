@@ -1,11 +1,9 @@
 import pytest
 from fastf1 import get_session
-from datetime import datetime
 
-from f1analyzer.utils.load import get_session_type_identifier
-from f1analyzer.utils.graphs_type import get_available_graphs
-
-from f1analyzer.utils.load import get_all_year_rounds
+from f1analyzer.core.session import get_session_type_identifier
+from f1analyzer.core.graphs_type import get_available_graphs
+from test.build_test_cases import _build_test_cases
 
 PRACTICE_GRAPHS: list[str] = ["axV", "ayV", "gg", "aeroSummary", "gapMap", "gapToFastest", "idealLap", "inputs",
                               "miniSectorsMap", "predictedRacePace", "speedAcc", "speedDelta", "speedDeltaBattle",
@@ -18,15 +16,6 @@ QUALIFYING_GRAPHS: list[str] = ["axV", "ayV", "gg", "aeroSummary", "gapMap", "ga
 RACE_GRAPHS: list[str] = ["dragReduction", "gapToWinner", "positionPerLap", "racePaceAnalysis", "raceStart",
                           "raceStrategy", "minSpeedHeatMap", "maxSpeedHeatMap", "tyreDegFuelCorr", "tyreDegNoFuelCorr",
                           "tyreWear"]
-
-def _build_test_cases():
-    cases = []
-    for year in range(2018, datetime.today().year + 1):
-        rounds = get_all_year_rounds(int(year))
-        for rnd in rounds["RoundNumber"]:
-            for session_num in range(1, 6):
-                cases.append((int(year), int(rnd), session_num))
-    return cases
 
 TEST_CASES = _build_test_cases()
 

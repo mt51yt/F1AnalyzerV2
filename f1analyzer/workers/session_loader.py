@@ -1,6 +1,6 @@
 from PySide6.QtCore import QObject, Signal
 from fastf1.core import Session
-from f1analyzer.utils.load import load_session
+from f1analyzer.core.session import load_session
 
 
 class SessionLoaderWorker(QObject):

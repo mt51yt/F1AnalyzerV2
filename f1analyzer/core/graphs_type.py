@@ -1,5 +1,5 @@
 from fastf1.core import Session
-from f1analyzer.utils.load import get_session_type_identifier
+from f1analyzer.core.session import get_session_type_identifier
 
 ALL_GRAPHS: dict[str, list[str]] = {"PQ": ["axV", "ayV", "gg", "aeroSummary", "gapMap", "gapToFastest", "idealLap",
                                            "inputs", "miniSectorsMap", "predictedRacePace", "speedAcc", "speedDelta",

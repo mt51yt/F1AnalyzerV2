@@ -2,7 +2,7 @@ from PySide6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from PySide6.QtWidgets import QTreeView, QDockWidget
 from enum import Enum, auto
 
-from f1analyzer.utils.load import get_all_year_rounds, get_all_round_sessions_names, get_all_years
+from f1analyzer.core.schedule import get_all_year_rounds, get_all_round_sessions_names, get_all_years
 
 
 class NodeType(Enum):
